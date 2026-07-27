@@ -42,6 +42,26 @@ const supabase = {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return parseInt(res.headers.get('content-range')?.split('/')[1] || '0');
+  },
+  async update(table, id, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...this._headers, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    return res.json();
+  },
+  async remove(table, id) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { ...this._headers }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    return true;
+  },
+  async toggle(table, id, field, value) {
+    return this.update(table, id, { [field]: value });
   }
 };
 
@@ -93,7 +113,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             categorias[p.categoria].push(p);
         });
 
-        let html = '<h2>📦 Inventario (' + productos.length + ' productos)</h2>';
+        let html = '<div class="inv-header">' +
+            '<h2>📦 Inventario (' + productos.length + ' productos)</h2>' +
+            '<button class="btn-refresh" onclick="location.reload()">🔄</button>' +
+            '</div>';
         const catOrden = ['proteinas', 'verduras', 'frutas', 'granos', 'lacteos', 'congelados', 'snacks', 'aceites', 'condimentos', 'bebidas', 'cafe', 'despensa', 'limpieza', 'cuidado_personal', 'otros'];
         const catKeys = Object.keys(categorias).sort((a, b) => {
             const ia = catOrden.indexOf(a);
@@ -105,18 +128,79 @@ document.addEventListener('DOMContentLoaded', async function() {
             html += '<div class="categoria-group">' +
                 '<div class="categoria-titulo">' + capitalize(cat) + '</div>';
             categorias[cat].forEach(p => {
-                html += '<div class="producto-item">' +
+                const hasId = p.id !== undefined && p.id !== null;
+                html += '<div class="producto-item" data-id="' + (hasId ? p.id : '') + '">' +
                     '<div class="producto-info">' +
-                    '<span class="producto-status ' + (p.tiene ? 'si' : 'no') + '"></span>' +
-                    '<span>' + p.nombre + '</span>' +
+                    (hasId
+                        ? '<span class="producto-status clickable ' + (p.tiene ? 'si' : 'no') + '" onclick="toggleProducto(' + p.id + ',' + (p.tiene ? 'false' : 'true') + ')" title="' + (p.tiene ? 'Tiene' : 'No tiene') + '"></span>'
+                        : '<span class="producto-status ' + (p.tiene ? 'si' : 'no') + '"></span>'
+                    ) +
+                    '<span class="prod-nombre">' + p.nombre + '</span>' +
                     (p.nota ? '<span class="producto-nota">— ' + p.nota + '</span>' : '') +
                     (p.cantidad ? '<span class="producto-nota">(' + p.cantidad + ')</span>' : '') +
-                    '</div></div>';
+                    '</div>' +
+                    (hasId
+                        ? '<div class="prod-actions">' +
+                        '<button class="btn-icon btn-edit" onclick="editarProducto(' + p.id + ',\'' + escapeJs(p.nombre) + '\',\'' + escapeJs(p.categoria) + '\',\'' + escapeJs(p.nota || '') + '\',\'' + escapeJs(p.cantidad || '') + '\')" title="Editar">✏️</button>' +
+                        '<button class="btn-icon btn-del" onclick="eliminarProducto(' + p.id + ',\'' + escapeJs(p.nombre) + '\')" title="Eliminar">🗑️</button>' +
+                        '</div>'
+                        : ''
+                    ) +
+                    '</div>';
             });
             html += '</div>';
         });
         productosList.innerHTML = html;
     }
+
+    // Helper to escape strings for JS
+    function escapeJs(s) {
+        if (!s) return '';
+        return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+    }
+
+    // --- Funciones globales para acciones de productos ---
+    window.toggleProducto = async function(id, nuevoValor) {
+        try {
+            await supabase.update('productos', id, { tiene: nuevoValor });
+            const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
+            renderProductos(productos);
+        } catch (e) {
+            alert('Error al actualizar: ' + e.message);
+        }
+    };
+
+    window.eliminarProducto = async function(id, nombre) {
+        if (!confirm('🗑️ ¿Eliminar "' + nombre + '" de la despensa?')) return;
+        try {
+            await supabase.remove('productos', id);
+            const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
+            renderProductos(productos);
+        } catch (e) {
+            alert('Error al eliminar: ' + e.message);
+        }
+    };
+
+    window.editarProducto = async function(id, nombreActual, categoriaActual, notaActual, cantidadActual) {
+        const nuevoNombre = prompt('Nombre:', nombreActual);
+        if (nuevoNombre === null) return;
+        const nuevoNota = prompt('Nota (opcional):', notaActual || '');
+        if (nuevoNota === null) return;
+        const nuevaCantidad = prompt('Cantidad (opcional):', cantidadActual || '');
+        if (nuevaCantidad === null) return;
+
+        try {
+            await supabase.update('productos', id, {
+                nombre: nuevoNombre,
+                nota: nuevoNota || '',
+                cantidad: nuevaCantidad || ''
+            });
+            const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
+            renderProductos(productos);
+        } catch (e) {
+            alert('Error al editar: ' + e.message);
+        }
+    };
 
     // --- Render sugerencia ---
     function renderSugerencia(productos) {

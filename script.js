@@ -159,48 +159,102 @@ document.addEventListener('DOMContentLoaded', async function() {
         return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
     }
 
-    // --- Funciones globales para acciones de productos ---
+    // --- Funciones globales con SweetAlert2 ---
     window.toggleProducto = async function(id, nuevoValor) {
         try {
             await supabase.update('productos', id, { tiene: nuevoValor });
             const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
             renderProductos(productos);
+            Swal.fire({
+                icon: 'success',
+                title: nuevoValor ? '✅ Marcado como disponible' : '❌ Marcado como agotado',
+                timer: 1200,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
         } catch (e) {
-            alert('Error al actualizar: ' + e.message);
+            Swal.fire('Error', 'No se pudo actualizar: ' + e.message, 'error');
         }
     };
 
     window.eliminarProducto = async function(id, nombre) {
-        if (!confirm('🗑️ ¿Eliminar "' + nombre + '" de la despensa?')) return;
+        const result = await Swal.fire({
+            title: '🗑️ ¿Eliminar?',
+            text: '¿Eliminar "' + nombre + '" de la despensa?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+        if (!result.isConfirmed) return;
+
         try {
             await supabase.remove('productos', id);
             const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
             renderProductos(productos);
+            Swal.fire({
+                icon: 'success',
+                title: 'Eliminado',
+                text: '"' + nombre + '" eliminado de la despensa',
+                timer: 1500,
+                showConfirmButton: false
+            });
         } catch (e) {
-            alert('Error al eliminar: ' + e.message);
+            Swal.fire('Error', 'No se pudo eliminar: ' + e.message, 'error');
         }
     };
 
     window.editarProducto = async function(id, nombreActual, categoriaActual, notaActual, cantidadActual) {
-        const nuevoNombre = prompt('Nombre:', nombreActual);
-        if (nuevoNombre === null) return;
-        const nuevoNota = prompt('Nota (opcional):', notaActual || '');
-        if (nuevoNota === null) return;
-        const nuevaCantidad = prompt('Cantidad (opcional):', cantidadActual || '');
-        if (nuevaCantidad === null) return;
+        const { value: formValues } = await Swal.fire({
+            title: '✏️ Editar producto',
+            html:
+                '<input id="swal-nombre" class="swal2-input" placeholder="Nombre" value="' + escapeHtml(nombreActual) + '">' +
+                '<input id="swal-nota" class="swal2-input" placeholder="Nota (ej: 0.5 kg)" value="' + escapeHtml(notaActual || '') + '">' +
+                '<input id="swal-cantidad" class="swal2-input" placeholder="Cantidad" value="' + escapeHtml(cantidadActual || '') + '">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: '💾 Guardar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                return {
+                    nombre: document.getElementById('swal-nombre').value,
+                    nota: document.getElementById('swal-nota').value,
+                    cantidad: document.getElementById('swal-cantidad').value
+                };
+            }
+        });
+
+        if (!formValues) return;
+        if (!formValues.nombre.trim()) {
+            Swal.fire('Error', 'El nombre no puede estar vacío', 'error');
+            return;
+        }
 
         try {
             await supabase.update('productos', id, {
-                nombre: nuevoNombre,
-                nota: nuevoNota || '',
-                cantidad: nuevaCantidad || ''
+                nombre: formValues.nombre.trim(),
+                nota: formValues.nota.trim() || '',
+                cantidad: formValues.cantidad.trim() || ''
             });
             const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
             renderProductos(productos);
+            Swal.fire({
+                icon: 'success',
+                title: '✅ Actualizado',
+                timer: 1200,
+                showConfirmButton: false
+            });
         } catch (e) {
-            alert('Error al editar: ' + e.message);
+            Swal.fire('Error', 'No se pudo editar: ' + e.message, 'error');
         }
     };
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
 
     // --- Render sugerencia ---
     function renderSugerencia(productos) {

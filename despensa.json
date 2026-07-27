@@ -1,0 +1,23 @@
+{
+  "actualizado": "2026-07-26",
+  "productos": [
+    {
+      "nombre": "Arroz",
+      "categoria": "granos",
+      "tiene": true,
+      "nota": ""
+    },
+    {
+      "nombre": "Frijoles",
+      "categoria": "granos",
+      "tiene": false,
+      "nota": "Se acabaron"
+    },
+    {
+      "nombre": "Huevos",
+      "categoria": "proteinas",
+      "tiene": true,
+      "nota": ""
+    }
+  ]
+}

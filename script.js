@@ -207,21 +207,40 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     window.editarProducto = async function(id, nombreActual, categoriaActual, notaActual, cantidadActual) {
+        const categorias = ['proteinas','verduras','frutas','granos','lacteos','congelados','snacks','aceites','condimentos','bebidas','cafe','despensa','limpieza','cuidado_personal','otros'];
+        const catOptions = categorias.map(c =>
+            '<option value="' + c + '"' + (c === categoriaActual ? ' selected' : '') + '>' + capitalize(c) + '</option>'
+        ).join('');
+
         const { value: formValues } = await Swal.fire({
             title: '✏️ Editar producto',
             html:
-                '<input id="swal-nombre" class="swal2-input" placeholder="Nombre" value="' + escapeHtml(nombreActual) + '">' +
-                '<input id="swal-nota" class="swal2-input" placeholder="Nota (ej: 0.5 kg)" value="' + escapeHtml(notaActual || '') + '">' +
-                '<input id="swal-cantidad" class="swal2-input" placeholder="Cantidad" value="' + escapeHtml(cantidadActual || '') + '">',
+                '<div class="swal-form-group">' +
+                    '<label class="swal-label">Categoría</label>' +
+                    '<select id="swal-categoria" class="swal2-input swal-select">' + catOptions + '</select>' +
+                '</div>' +
+                '<div class="swal-form-group">' +
+                    '<label class="swal-label">Nombre del producto *</label>' +
+                    '<input id="swal-nombre" class="swal2-input" placeholder="Ej: Arroz, Frijoles..." value="' + escapeHtml(nombreActual) + '">' +
+                '</div>' +
+                '<div class="swal-form-group">' +
+                    '<label class="swal-label">Cantidad (opcional)</label>' +
+                    '<input id="swal-cantidad" class="swal2-input" placeholder="Ej: 1 kg, 500g" value="' + escapeHtml(cantidadActual || '') + '">' +
+                '</div>' +
+                '<div class="swal-form-group">' +
+                    '<label class="swal-label">Nota (opcional)</label>' +
+                    '<input id="swal-nota" class="swal2-input" placeholder="Ej: Se está acabando" value="' + escapeHtml(notaActual || '') + '">' +
+                '</div>',
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: '💾 Guardar',
+            confirmButtonText: '💾 Guardar cambios',
             cancelButtonText: 'Cancelar',
             preConfirm: () => {
                 return {
+                    categoria: document.getElementById('swal-categoria').value,
                     nombre: document.getElementById('swal-nombre').value,
-                    nota: document.getElementById('swal-nota').value,
-                    cantidad: document.getElementById('swal-cantidad').value
+                    cantidad: document.getElementById('swal-cantidad').value,
+                    nota: document.getElementById('swal-nota').value
                 };
             }
         });
@@ -234,9 +253,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         try {
             await supabase.update('productos', id, {
+                categoria: formValues.categoria,
                 nombre: formValues.nombre.trim(),
-                nota: formValues.nota.trim() || '',
-                cantidad: formValues.cantidad.trim() || ''
+                cantidad: formValues.cantidad.trim() || '',
+                nota: formValues.nota.trim() || ''
             });
             const productos = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
             renderProductos(productos);

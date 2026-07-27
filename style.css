@@ -294,6 +294,32 @@ footer a:hover {
     font-style: italic;
 }
 
+/* SweetAlert form styles */
+.swal-form-group {
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.swal-label {
+  display: block;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 4px;
+  font-size: 0.85em;
+}
+
+.swal2-input.swal-select {
+  height: 42px;
+  padding: 0 12px;
+  background: #fafaf8;
+}
+
+.swal2-input {
+  margin: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 /* Product actions */
 .prod-actions {
   display: flex;

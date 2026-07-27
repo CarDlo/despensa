@@ -276,13 +276,56 @@ document.addEventListener('DOMContentLoaded', async function() {
         return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
-    // --- Render sugerencia ---
-    function renderSugerencia(productos) {
-        const listaNombres = productos.map(p => p.nombre.toLowerCase());
+    // --- Render sugerencia (desde menu_del_dia o fallback) ---
+    async function renderSugerencia(productos) {
+        sugerenciaContent.innerHTML = '<p class="loading">Cargando sugerencia del día...</p>';
 
-        function tiene(...items) {
-            return items.every(i => listaNombres.some(n => n.includes(i)));
+        // 1. Intentar leer el menú del día desde Supabase
+        try {
+            const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const res = await fetch(\`\${SUPABASE_URL}/rest/v1/menu_del_dia?select=*\&fecha=eq.\${hoy}&order=created_at.desc&limit=1\`, {
+                headers: {
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+                    'Accept': 'application/json'
+                },
+                cache: 'no-store'
+            });
+            if (res.ok) {
+                const menus = await res.json();
+                if (menus.length > 0) {
+                    const m = menus[0];
+                    // Si hay mensaje completo, mostrarlo directo con formato bonito
+                    if (m.mensaje_completo) {
+                        sugerenciaContent.innerHTML = '<div class="sugerencia-card menu-del-dia">' +
+                            '<div class="menu-header"><span class="badge-vivo">🍽️ Menú del Día</span></div>' +
+                            '<div class="menu-mensaje">' + m.mensaje_completo.replace(/\n/g, '<br>') + '</div>' +
+                            '<p style="margin-top:10px;font-size:0.8em;color:#999">📅 ' + m.fecha + '</p>' +
+                            '</div>';
+                        return;
+                    }
+                    // Fallback: mostrar campos individuales
+                    let html = '<div class="sugerencia-card menu-del-dia">' +
+                        '<div class="menu-header"><span class="badge-vivo">🍽️ Menú del Día</span></div>';
+                    if (m.platillo) html += '<h3>' + m.platillo + '</h3>';
+                    if (m.proteina) html += '<p><strong>Proteína:</strong> ' + m.proteina + '</p>';
+                    if (m.verduras) html += '<p><strong>Verduras:</strong> ' + m.verduras + '</p>';
+                    if (m.carbohidrato) html += '<p><strong>Carbohidrato:</strong> ' + m.carbohidrato + '</p>';
+                    if (m.bebida) html += '<p><strong>Bebida:</strong> ' + m.bebida + '</p>';
+                    if (m.preparacion) html += '<p><strong>Preparación:</strong> ' + m.preparacion + '</p>';
+                    if (m.tips) html += '<p><strong>Tips:</strong> ' + m.tips + '</p>';
+                    if (m.tiempo_total) html += '<p><strong>Tiempo:</strong> ' + m.tiempo_total + '</p>';
+                    html += '<p style="margin-top:10px;font-size:0.8em;color:#999">📅 ' + m.fecha + '</p></div>';
+                    sugerenciaContent.innerHTML = html;
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo obtener menu_del_dia:', e.message);
         }
+
+        // 2. Fallback: sugerencias hardcodeadas
+        const listaNombres = productos.map(p => p.nombre.toLowerCase());
 
         const hoy = new Date();
         const diaSemana = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
@@ -290,7 +333,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         let sugerencia;
 
-        // Viernes = tradición
         if (dia === 'viernes') {
             sugerencia = {
                 titulo: '🍛 Fríjoles con cerdo y arroz (Tradición de los viernes)',
@@ -300,55 +342,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             };
         } else {
             const sugerencias = [
-                {
-                    titulo: '🥗 Salteado de verduras con atún y arroz',
-                    desc: 'Saltea cebolla, ajo, pimentón, habichuela, zanahoria, brócoli y arveja. Añade el atún escurrido. Sirve con arroz blanco y cilantro picado.',
-                    acompanante: 'Ensalada de pepino, tomate y cebolla con limón.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🍛 Arroz con verduras y queso costeño',
-                    desc: 'Prepara arroz y cuando esté listo mezcla vegetales mixtos salteados con ajo y cebolla. Añade queso costeño desmechado por encima.',
-                    acompanante: 'Rodajas de tomate con limón y sal.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🥘 Mazorca con auyama y queso',
-                    desc: 'Cocina la mazorca y la auyama en trozos. Sirve con queso costeño derretido y cilantro.',
-                    acompanante: 'Arroz blanco y ensalada de espinaca con mango.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🥩 Carne para pitar guisada con arroz',
-                    desc: 'Guisa la carne para pitar con cebolla, ajo, pimentón, tomate y cilantro a fuego lento.',
-                    acompanante: 'Arroz blanco y ensalada de espinaca con mango y limón.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🐔 Pechuga de pollo salteada con verduras',
-                    desc: 'Corta la pechuga en tiras y saltea con cebolla, ajo y pimentón. Añade brócoli, zanahoria y habichuela.',
-                    acompanante: 'Arroz blanco y rodajas de tomate con limón.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🐟 Pescado con ensalada y patacones',
-                    desc: 'Prepara el pescado al sartén con ajo y limón.',
-                    acompanante: 'Ensalada de pepino, tomate y cebolla. Patacones de plátano verde.',
-                    bebida: 'Agua de limón'
-                },
-                {
-                    titulo: '🥗 Ensalada de atún con granola y yogurt',
-                    desc: 'Mezcla atún desmenuzado con espinaca, mango, limón. Acompaña con Vitagranola.',
-                    acompanante: 'Pan tostado o arepa.',
-                    bebida: 'Agua de limón'
-                }
+                { titulo: '🥗 Salteado de verduras con atún y arroz', desc: 'Saltea cebolla, ajo, pimentón, habichuela, zanahoria, brócoli y arveja. Añade el atún escurrido. Sirve con arroz blanco y cilantro picado.', acompanante: 'Ensalada de pepino, tomate y cebolla con limón.', bebida: 'Agua de limón' },
+                { titulo: '🍛 Arroz con verduras y queso costeño', desc: 'Prepara arroz y cuando esté listo mezcla vegetales mixtos salteados con ajo y cebolla. Añade queso costeño desmechado por encima.', acompanante: 'Rodajas de tomate con limón y sal.', bebida: 'Agua de limón' },
+                { titulo: '🥘 Mazorca con auyama y queso', desc: 'Cocina la mazorca y la auyama en trozos. Sirve con queso costeño derretido y cilantro.', acompanante: 'Arroz blanco y ensalada de espinaca con mango.', bebida: 'Agua de limón' },
+                { titulo: '🥩 Carne para pitar guisada con arroz', desc: 'Guisa la carne para pitar con cebolla, ajo, pimentón, tomate y cilantro a fuego lento.', acompanante: 'Arroz blanco y ensalada de espinaca con mango y limón.', bebida: 'Agua de limón' },
+                { titulo: '🐔 Pechuga de pollo salteada con verduras', desc: 'Corta la pechuga en tiras y saltea con cebolla, ajo y pimentón. Añade brócoli, zanahoria y habichuela.', acompanante: 'Arroz blanco y rodajas de tomate con limón.', bebida: 'Agua de limón' },
+                { titulo: '🐟 Pescado con ensalada y patacones', desc: 'Prepara el pescado al sartén con ajo y limón.', acompanante: 'Ensalada de pepino, tomate y cebolla. Patacones de plátano verde.', bebida: 'Agua de limón' },
+                { titulo: '🥗 Ensalada de atún con granola y yogurt', desc: 'Mezcla atún desmenuzado con espinaca, mango, limón. Acompaña con Vitagranola.', acompanante: 'Pan tostado o arepa.', bebida: 'Agua de limón' }
             ];
-            const idx = hoy.getDate() % sugerencias.length;
-            sugerencia = sugerencias[idx];
+            sugerencia = sugerencias[hoy.getDate() % sugerencias.length];
         }
 
         sugerenciaContent.innerHTML = '<div class="sugerencia-card">' +
-            '<span class="dia-badge">' + capitalize(dia) + '</span>' +
+            '<span class="badge-fallback">📋 Sugerencia</span>' +
             '<h3>' + sugerencia.titulo + '</h3>' +
             '<p><strong>Preparación:</strong> ' + sugerencia.desc + '</p>' +
             '<p><strong>Acompañante:</strong> ' + sugerencia.acompanante + '</p>' +

@@ -1,6 +1,6 @@
 {
   "actualizado": "2026-07-26",
-  "nota": "Viernes: fríjoles con cerdo y arroz (tradición familiar)",
+  "nota": "Viernes: fríjoles con cerdo y arroz | Bebida habitual: agua de limón",
   "productos": [
     {
       "nombre": "Pepino Cohombro",
@@ -350,5 +350,9 @@
       "tiene": true,
       "nota": "Para los viernes"
     }
-  ]
+  ],
+  "preferencias": {
+    "bebida_default": "Agua de limón",
+    "sugerir_jugo": "Ocasional, si hay fruta con mucho tiempo en inventario"
+  }
 }

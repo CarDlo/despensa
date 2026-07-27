@@ -74,27 +74,49 @@ document.addEventListener('DOMContentLoaded', async function() {
                 titulo: '🥗 Salteado de verduras con atún y arroz',
                 desc: 'Saltea cebolla, ajo, pimentón, habichuela, zanahoria, brócoli y arveja. Añade el atún escurrido. Sirve con arroz blanco y cilantro picado.',
                 acompanante: 'Ensalada de pepino, tomate y cebolla con limón.',
-                jugo: 'Papaya o mango.'
+                bebida: 'Agua de limón'
             },
             {
                 titulo: '🍛 Arroz con verduras y queso costeño',
                 desc: 'Prepara arroz y cuando esté listo mezcla vegetales mixtos McCain salteados con ajo y cebolla. Añade queso costeño desmechado por encima.',
                 acompanante: 'Rodajas de aguacate o tomate con limón y sal.',
-                jugo: 'Limón con hierbabuena.'
+                bebida: 'Agua de limón'
             },
             {
                 titulo: '🥘 Mazorca con auyama y queso',
                 desc: 'Cocina la mazorca y la auyama en trozos. Sirve con queso costeño derretido y un toque de cilantro.',
                 acompanante: 'Arroz blanco y ensalada de espinaca con mango.',
-                jugo: 'Granadilla.'
+                bebida: 'Agua de limón. Si quieren variar: jugo de granadilla'
             },
             {
                 titulo: '🍳 Tortilla de verduras con ensalada',
                 desc: 'Si tienen huevos: bate con espinaca picada, cebolla y tomate. Cocina como tortilla gruesa.',
                 acompanante: 'Arroz blanco y ensalada de pepino con limón.',
-                jugo: 'Papaya.'
+                bebida: 'Agua de limón'
+            },
+            {
+                titulo: '🥩 Carne para pitar guisada con arroz',
+                desc: 'Guisa la carne para pitar con cebolla, ajo, pimentón, tomate y cilantro. Cocina a fuego lento hasta que esté suave. Sirve con arroz.',
+                acompanante: 'Ensalada de espinaca con mango y limón.',
+                bebida: 'Agua de limón'
+            },
+            {
+                titulo: '🐔 Pechuga de pollo salteada con verduras',
+                desc: 'Corta la pechuga en tiras y saltea con cebolla, ajo y pimentón. Añade brócoli, zanahoria y habichuela.',
+                acompanante: 'Arroz blanco y rodajas de tomate con limón.',
+                bebida: 'Agua de limón'
+            },
+            {
+                titulo: '🐟 Pescado con ensalada y patacones',
+                desc: 'Prepara el pescado al sartén con ajo y limón. Acompaña con plátano verde en patacones y ensalada fresca.',
+                acompanante: 'Ensalada de pepino, tomate y cebolla. Patacones de plátano verde.',
+                bebida: 'Agua de limón'
             }
         ];
+
+        // Friday special
+        const diaSemana = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+        const hoyNombre = diaSemana[new Date().getDay()];
 
         const hoy = new Date().getDate();
         const idx = hoy % sugerencias.length;

@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         // 1. Intentar leer el menú del día desde Supabase
         try {
             const hoy = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            const res = await fetch(\`\${SUPABASE_URL}/rest/v1/menu_del_dia?select=*\&fecha=eq.\${hoy}&order=created_at.desc&limit=1\`, {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_del_dia?select=*&fecha=eq.${hoy}&order=created_at.desc&limit=1`, {
                 headers: {
                     'apikey': SUPABASE_ANON_KEY,
                     'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,

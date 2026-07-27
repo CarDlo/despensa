@@ -1,6 +1,6 @@
 {
   "actualizado": "2026-07-26",
-  "nota": "Registrado desde recibos de compra del 26/07/2026.",
+  "nota": "Viernes: fríjoles con cerdo y arroz (tradición familiar)",
   "productos": [
     {
       "nombre": "Pepino Cohombro",
@@ -337,6 +337,18 @@
       "categoria": "proteinas",
       "tiene": true,
       "nota": ""
+    },
+    {
+      "nombre": "Frijoles",
+      "categoria": "granos",
+      "tiene": true,
+      "nota": "Para los viernes"
+    },
+    {
+      "nombre": "Carne de cerdo",
+      "categoria": "proteinas",
+      "tiene": true,
+      "nota": "Para los viernes"
     }
   ]
 }

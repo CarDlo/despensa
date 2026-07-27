@@ -1,3 +1,50 @@
+// =============================================
+// Despensa del Hogar - Supabase Edition
+// =============================================
+
+const SUPABASE_URL = 'https://akxqzvznhredtsuuphyo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_TGlasu1b8RQ-J_Oh0YLD6g_dRB4gRt7';
+
+// Mini Supabase REST client (sin librería externa)
+const supabase = {
+  _headers: {
+    'apikey': SUPABASE_ANON_KEY,
+    'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=minimal'
+  },
+  async query(table, { select, eq, order } = {}) {
+    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    const params = [];
+    if (select) params.push(`select=${select}`);
+    if (eq) params.push(`${eq.col}=eq.${encodeURIComponent(eq.val)}`);
+    if (order) params.push(`order=${order.col}.${order.dir || 'asc'}`);
+    if (params.length) url += '?' + params.join('&');
+    const res = await fetch(url, {
+      headers: { ...this._headers, 'Accept': 'application/json' },
+      cache: 'no-store'
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    return res.json();
+  },
+  async insert(table, data) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: { ...this._headers, 'Prefer': 'return=representation' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+    return res.json();
+  },
+  async count(table) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=id&limit=0`, {
+      headers: { ...this._headers, 'Accept': 'application/json', 'Prefer': 'count=exact' }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return parseInt(res.headers.get('content-range')?.split('/')[1] || '0');
+  }
+};
+
 document.addEventListener('DOMContentLoaded', async function() {
     const STORAGE_KEY = 'despensa_agregados';
 
@@ -11,29 +58,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
 
-    // --- Cargar despensa oficial ---
-    async function cargarDespensa() {
+    const productosList = document.getElementById('productosList');
+    const sugerenciaContent = document.getElementById('sugerenciaContent');
+    const lastUpdate = document.getElementById('lastUpdate');
+
+    // --- Cargar productos desde Supabase ---
+    let productosDB = [];
+    try {
+        productosDB = await supabase.query('productos', { select: '*', order: { col: 'categoria', dir: 'asc' } });
+        const total = await supabase.count('productos');
+        lastUpdate.textContent = `📡 Base de datos · ${total} productos · En vivo desde la nube`;
+    } catch (e) {
+        console.warn('Supabase no disponible, cargando JSON local:', e.message);
         try {
             const resp = await fetch('despensa.json?' + Date.now());
-            return await resp.json();
-        } catch (e) {
-            return null;
+            const data = await resp.json();
+            productosDB = data.productos;
+            lastUpdate.textContent = '📁 Modo local (sin conexión a BD) - ' + data.actualizado;
+        } catch (e2) {
+            productosList.innerHTML = '<p class="loading">Error cargando datos. ¿Supabase configurado?</p>';
+            sugerenciaContent.innerHTML = '<p class="loading">Esperando datos...</p>';
+            return;
         }
     }
 
-    const data = await cargarDespensa();
-    const lastUpdate = document.getElementById('lastUpdate');
-    const productosList = document.getElementById('productosList');
-    const sugerenciaContent = document.getElementById('sugerenciaContent');
-
-    if (data) {
-        lastUpdate.textContent = 'Última actualización: ' + data.actualizado + (data.nota ? ' · ' + data.nota : '');
-        renderProductos(data.productos);
-        renderSugerencia();
-    } else {
-        productosList.innerHTML = '<p class="loading">No hay datos de despensa aún.</p>';
-        sugerenciaContent.innerHTML = '<p class="loading">Esperando despensa...</p>';
-    }
+    renderProductos(productosDB);
+    renderSugerencia(productosDB);
 
     // --- Render productos ---
     function renderProductos(productos) {
@@ -60,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     '<span class="producto-status ' + (p.tiene ? 'si' : 'no') + '"></span>' +
                     '<span>' + p.nombre + '</span>' +
                     (p.nota ? '<span class="producto-nota">— ' + p.nota + '</span>' : '') +
+                    (p.cantidad ? '<span class="producto-nota">(' + p.cantidad + ')</span>' : '') +
                     '</div></div>';
             });
             html += '</div>';
@@ -68,66 +119,83 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     // --- Render sugerencia ---
-    function renderSugerencia() {
-        const sugerencias = [
-            {
-                titulo: '🥗 Salteado de verduras con atún y arroz',
-                desc: 'Saltea cebolla, ajo, pimentón, habichuela, zanahoria, brócoli y arveja. Añade el atún escurrido. Sirve con arroz blanco y cilantro picado.',
-                acompanante: 'Ensalada de pepino, tomate y cebolla con limón.',
-                bebida: 'Agua de limón'
-            },
-            {
-                titulo: '🍛 Arroz con verduras y queso costeño',
-                desc: 'Prepara arroz y cuando esté listo mezcla vegetales mixtos McCain salteados con ajo y cebolla. Añade queso costeño desmechado por encima.',
-                acompanante: 'Rodajas de aguacate o tomate con limón y sal.',
-                bebida: 'Agua de limón'
-            },
-            {
-                titulo: '🥘 Mazorca con auyama y queso',
-                desc: 'Cocina la mazorca y la auyama en trozos. Sirve con queso costeño derretido y un toque de cilantro.',
-                acompanante: 'Arroz blanco y ensalada de espinaca con mango.',
-                bebida: 'Agua de limón. Si quieren variar: jugo de granadilla'
-            },
-            {
-                titulo: '🍳 Tortilla de verduras con ensalada',
-                desc: 'Si tienen huevos: bate con espinaca picada, cebolla y tomate. Cocina como tortilla gruesa.',
-                acompanante: 'Arroz blanco y ensalada de pepino con limón.',
-                bebida: 'Agua de limón'
-            },
-            {
-                titulo: '🥩 Carne para pitar guisada con arroz',
-                desc: 'Guisa la carne para pitar con cebolla, ajo, pimentón, tomate y cilantro. Cocina a fuego lento hasta que esté suave. Sirve con arroz.',
-                acompanante: 'Ensalada de espinaca con mango y limón.',
-                bebida: 'Agua de limón'
-            },
-            {
-                titulo: '🐔 Pechuga de pollo salteada con verduras',
-                desc: 'Corta la pechuga en tiras y saltea con cebolla, ajo y pimentón. Añade brócoli, zanahoria y habichuela.',
-                acompanante: 'Arroz blanco y rodajas de tomate con limón.',
-                bebida: 'Agua de limón'
-            },
-            {
-                titulo: '🐟 Pescado con ensalada y patacones',
-                desc: 'Prepara el pescado al sartén con ajo y limón. Acompaña con plátano verde en patacones y ensalada fresca.',
-                acompanante: 'Ensalada de pepino, tomate y cebolla. Patacones de plátano verde.',
-                bebida: 'Agua de limón'
-            }
-        ];
+    function renderSugerencia(productos) {
+        const listaNombres = productos.map(p => p.nombre.toLowerCase());
 
-        // Friday special
+        function tiene(...items) {
+            return items.every(i => listaNombres.some(n => n.includes(i)));
+        }
+
+        const hoy = new Date();
         const diaSemana = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
-        const hoyNombre = diaSemana[new Date().getDay()];
+        const dia = diaSemana[hoy.getDay()];
 
-        const hoy = new Date().getDate();
-        const idx = hoy % sugerencias.length;
-        const s = sugerencias[idx];
+        let sugerencia;
+
+        // Viernes = tradición
+        if (dia === 'viernes') {
+            sugerencia = {
+                titulo: '🍛 Fríjoles con cerdo y arroz (Tradición de los viernes)',
+                desc: 'Prepara los fríjoles con costilla o carne de cerdo, cebolla, ajo y cilantro. Sirve con arroz blanco.',
+                acompanante: 'Ensalada de tomate, cebolla y limón. Patacones de plátano verde.',
+                bebida: 'Agua de limón'
+            };
+        } else {
+            const sugerencias = [
+                {
+                    titulo: '🥗 Salteado de verduras con atún y arroz',
+                    desc: 'Saltea cebolla, ajo, pimentón, habichuela, zanahoria, brócoli y arveja. Añade el atún escurrido. Sirve con arroz blanco y cilantro picado.',
+                    acompanante: 'Ensalada de pepino, tomate y cebolla con limón.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🍛 Arroz con verduras y queso costeño',
+                    desc: 'Prepara arroz y cuando esté listo mezcla vegetales mixtos salteados con ajo y cebolla. Añade queso costeño desmechado por encima.',
+                    acompanante: 'Rodajas de tomate con limón y sal.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🥘 Mazorca con auyama y queso',
+                    desc: 'Cocina la mazorca y la auyama en trozos. Sirve con queso costeño derretido y cilantro.',
+                    acompanante: 'Arroz blanco y ensalada de espinaca con mango.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🥩 Carne para pitar guisada con arroz',
+                    desc: 'Guisa la carne para pitar con cebolla, ajo, pimentón, tomate y cilantro a fuego lento.',
+                    acompanante: 'Arroz blanco y ensalada de espinaca con mango y limón.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🐔 Pechuga de pollo salteada con verduras',
+                    desc: 'Corta la pechuga en tiras y saltea con cebolla, ajo y pimentón. Añade brócoli, zanahoria y habichuela.',
+                    acompanante: 'Arroz blanco y rodajas de tomate con limón.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🐟 Pescado con ensalada y patacones',
+                    desc: 'Prepara el pescado al sartén con ajo y limón.',
+                    acompanante: 'Ensalada de pepino, tomate y cebolla. Patacones de plátano verde.',
+                    bebida: 'Agua de limón'
+                },
+                {
+                    titulo: '🥗 Ensalada de atún con granola y yogurt',
+                    desc: 'Mezcla atún desmenuzado con espinaca, mango, limón. Acompaña con Vitagranola.',
+                    acompanante: 'Pan tostado o arepa.',
+                    bebida: 'Agua de limón'
+                }
+            ];
+            const idx = hoy.getDate() % sugerencias.length;
+            sugerencia = sugerencias[idx];
+        }
 
         sugerenciaContent.innerHTML = '<div class="sugerencia-card">' +
-            '<h3>' + s.titulo + '</h3>' +
-            '<p><strong>Preparación:</strong> ' + s.desc + '</p>' +
-            '<p><strong>Acompañante:</strong> ' + s.acompanante + '</p>' +
-            '<p><strong>Jugo:</strong> ' + s.jugo + '</p>' +
-            '<p style="margin-top:10px"><small>💬 ¿Quieres cambiar algo? Pregúntale a Poncho por WhatsApp</small></p>' +
+            '<span class="dia-badge">' + capitalize(dia) + '</span>' +
+            '<h3>' + sugerencia.titulo + '</h3>' +
+            '<p><strong>Preparación:</strong> ' + sugerencia.desc + '</p>' +
+            '<p><strong>Acompañante:</strong> ' + sugerencia.acompanante + '</p>' +
+            '<p><strong>Bebida:</strong> ' + sugerencia.bebida + '</p>' +
+            '<p style="margin-top:10px"><small>💬 ¿Quieres cambiar algo? Avísale a Poncho 🤖</small></p>' +
             '</div>';
     }
 
@@ -137,11 +205,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const agregadosLocal = document.getElementById('agregadosLocal');
 
     function cargarLocales() {
-        try {
-            return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        } catch { return []; }
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+        catch { return []; }
     }
-
     function guardarLocales(items) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     }
@@ -162,7 +228,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             '</div>'
         ).join('');
     }
-
     window.eliminarLocal = function(idx) {
         const items = cargarLocales();
         items.splice(idx, 1);
@@ -170,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         renderLocales();
     };
 
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', async function(e) {
         e.preventDefault();
         const nombre = document.getElementById('nombre').value.trim();
         if (!nombre) return;
@@ -180,25 +245,34 @@ document.addEventListener('DOMContentLoaded', async function() {
             categoria: document.getElementById('categoria').value,
             cantidad: document.getElementById('cantidad').value.trim(),
             nota: document.getElementById('nota').value.trim(),
-            agregado: new Date().toLocaleString('es-CO')
+            tiene: true,
+            creado_por: 'web'
         };
 
+        // Guardar local siempre
         const items = cargarLocales();
         items.push(producto);
         guardarLocales(items);
 
-        mensaje.className = 'mensaje exito';
-        mensaje.textContent = '✅ ' + nombre + ' agregado a tu lista local. Poncho lo sincronizará con la despensa oficial.';
+        // Intentar guardar en Supabase
+        let enBD = false;
+        try {
+            await supabase.insert('productos', producto);
+            enBD = true;
+            mensaje.className = 'mensaje exito';
+            mensaje.textContent = '✅ ' + nombre + ' agregado a la nube (Supabase) y a tu lista local.';
+        } catch (e) {
+            mensaje.className = 'mensaje exito';
+            mensaje.textContent = '✅ ' + nombre + ' agregado a tu lista local. Se sincronizará con la nube cuando la BD esté lista.';
+        }
         mensaje.style.display = 'block';
         form.reset();
         renderLocales();
-
         setTimeout(() => { mensaje.style.display = 'none'; }, 4000);
     });
 
     renderLocales();
 
-    // --- Helper ---
     function capitalize(str) {
         return str.charAt(0).toUpperCase() + str.slice(1).replace(/_/g, ' ');
     }

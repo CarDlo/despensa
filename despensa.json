@@ -1,23 +1,31 @@
 {
   "actualizado": "2026-07-26",
+  "nota": "Registrado desde recibo de compra.",
   "productos": [
-    {
-      "nombre": "Arroz",
-      "categoria": "granos",
-      "tiene": true,
-      "nota": ""
-    },
-    {
-      "nombre": "Frijoles",
-      "categoria": "granos",
-      "tiene": false,
-      "nota": "Se acabaron"
-    },
-    {
-      "nombre": "Huevos",
-      "categoria": "proteinas",
-      "tiene": true,
-      "nota": ""
-    }
+    {"nombre": "Pepino Cohombro", "categoria": "verduras", "tiene": true, "nota": "0.412 kg"},
+    {"nombre": "Zanahoria", "categoria": "verduras", "tiene": true, "nota": "0.934 kg"},
+    {"nombre": "Brócoli", "categoria": "verduras", "tiene": true, "nota": "0.188 kg"},
+    {"nombre": "Cilantro", "categoria": "verduras", "tiene": true, "nota": "Manojo"},
+    {"nombre": "Cilantro Cimarrón", "categoria": "verduras", "tiene": true, "nota": "0.094 kg"},
+    {"nombre": "Cebolla Larga", "categoria": "verduras", "tiene": true, "nota": "1.598 kg"},
+    {"nombre": "Auyama", "categoria": "verduras", "tiene": true, "nota": "Calabaza, 0.796 kg"},
+    {"nombre": "Cebolla Cabezona Blanca", "categoria": "verduras", "tiene": true, "nota": "1.108 kg"},
+    {"nombre": "Pimentón Rojo", "categoria": "verduras", "tiene": true, "nota": "0.398 kg"},
+    {"nombre": "Habichuela", "categoria": "verduras", "tiene": true, "nota": "Ejotes, 0.368 kg"},
+    {"nombre": "Arveja Verde", "categoria": "verduras", "tiene": true, "nota": "Guisantes con cáscara, 0.618 kg"},
+    {"nombre": "Berenjena", "categoria": "verduras", "tiene": true, "nota": ""},
+    {"nombre": "Papa Amarilla", "categoria": "verduras", "tiene": true, "nota": "0.630 kg"},
+    {"nombre": "Papa Pastusa", "categoria": "verduras", "tiene": true, "nota": "Bolsa 2.5 kg"},
+    {"nombre": "Plátano Verde", "categoria": "verduras", "tiene": true, "nota": "1.378 kg"},
+    {"nombre": "Ajo", "categoria": "condimentos", "tiene": true, "nota": "0.332 kg"},
+    {"nombre": "Granadilla", "categoria": "frutas", "tiene": true, "nota": "1.190 kg"},
+    {"nombre": "Limón Tahití", "categoria": "frutas", "tiene": true, "nota": "1.046 kg"},
+    {"nombre": "Mango", "categoria": "frutas", "tiene": true, "nota": "0.824 kg"},
+    {"nombre": "Sandía Baby", "categoria": "frutas", "tiene": true, "nota": "2.238 kg"},
+    {"nombre": "Papaya Común", "categoria": "frutas", "tiene": true, "nota": "2.626 kg"},
+    {"nombre": "Tomate Chonto", "categoria": "frutas", "tiene": true, "nota": "1.492 kg"},
+    {"nombre": "Aceite Popular Soya", "categoria": "aceites", "tiene": true, "nota": "3 litros"},
+    {"nombre": "Esponja Eterna PG2", "categoria": "limpieza", "tiene": true, "nota": "Acero inoxidable"},
+    {"nombre": "Bolsa Plástica Biodegradable", "categoria": "limpieza", "tiene": true, "nota": "Manigueta"}
   ]
 }

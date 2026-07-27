@@ -12,18 +12,80 @@
             <h1>🥘 Despensa del Hogar</h1>
             <p class="date" id="lastUpdate"></p>
         </header>
-        <section id="sugerencia">
-            <h2>🍽️ Sugerencia del Día</h2>
-            <div id="sugerenciaContent">
-                <p class="loading">Cargando sugerencia...</p>
-            </div>
-        </section>
-        <section id="inventario">
-            <h2>📦 Inventario</h2>
-            <div id="productosList"></div>
-        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="despensa">📦 Despensa</button>
+            <button class="tab-btn" data-tab="agregar">➕ Agregar</button>
+            <button class="tab-btn" data-tab="sugerencia">🍽️ Sugerencia</button>
+        </div>
+
+        <!-- Tab: Despensa -->
+        <div id="tab-despensa" class="tab-content active">
+            <section class="card">
+                <div id="productosList"></div>
+            </section>
+        </div>
+
+        <!-- Tab: Agregar -->
+        <div id="tab-agregar" class="tab-content">
+            <section class="card">
+                <h2>➕ Agregar producto a la despensa</h2>
+                <form id="formAgregar">
+                    <div class="form-group">
+                        <label for="nombre">Producto *</label>
+                        <input type="text" id="nombre" required placeholder="Ej: Frijoles, Leche, Huevos...">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <select id="categoria">
+                            <option value="verduras">Verduras</option>
+                            <option value="frutas">Frutas</option>
+                            <option value="proteinas">Proteínas</option>
+                            <option value="lacteos">Lácteos</option>
+                            <option value="granos">Granos</option>
+                            <option value="congelados">Congelados</option>
+                            <option value="snacks">Snacks</option>
+                            <option value="condimentos">Condimentos</option>
+                            <option value="bebidas">Bebidas</option>
+                            <option value="despensa">Despensa</option>
+                            <option value="aceites">Aceites</option>
+                            <option value="limpieza">Limpieza</option>
+                            <option value="cuidado_personal">Cuidado Personal</option>
+                            <option value="otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidad">Cantidad (opcional)</label>
+                        <input type="text" id="cantidad" placeholder="Ej: 1 kg, 500g, 6 unidades">
+                    </div>
+                    <div class="form-group">
+                        <label for="nota">Nota (opcional)</label>
+                        <input type="text" id="nota" placeholder="Ej: Se está acabando, marca X...">
+                    </div>
+                    <button type="submit" class="btn-primary">✅ Agregar a la despensa</button>
+                </form>
+                <div id="mensajeAgregar" class="mensaje"></div>
+
+                <hr>
+                <h3>📋 Agregados hoy en este dispositivo</h3>
+                <div id="agregadosLocal"></div>
+                <p class="nota-ayuda">ℹ️ Lo que agregues aquí se guarda localmente. Después yo lo sincronizo con el inventario oficial.</p>
+            </section>
+        </div>
+
+        <!-- Tab: Sugerencia -->
+        <div id="tab-sugerencia" class="tab-content">
+            <section class="card">
+                <h2>🍽️ Sugerencia del Día</h2>
+                <div id="sugerenciaContent">
+                    <p class="loading">Cargando sugerencia...</p>
+                </div>
+            </section>
+        </div>
+
         <footer>
-            <p>Actualizado por Poncho 🤖</p>
+            <p>Actualizado por Poncho 🤖 · <a href="https://github.com/CarDlo/despensa" target="_blank">Ver en GitHub</a></p>
         </footer>
     </div>
     <script src="script.js"></script>
